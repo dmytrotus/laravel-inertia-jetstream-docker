@@ -20,12 +20,20 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input)
     {
-        Validator::make($input, [
+        $validator = Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['required', 'accepted'] : '',
         ])->validate();
+
+        $count = 100;
+        if (User::count() > $count) {
+            $error = \Illuminate\Validation\ValidationException::withMessages([
+               'field_name_1' => ['Users in the database cannot be more than '.$count],
+            ]);
+            throw $error;
+        }
 
         return User::create([
             'name' => $input['name'],
